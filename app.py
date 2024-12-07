@@ -36,9 +36,9 @@ def register_attempt(ip, success):
     attempts, last_attempt = LOGIN_ATTEMPTS[ip]
 
     if success:
-        del LOGIN_ATTEMPTS[ip]  # Bei Erfolg: Reset
+        del LOGIN_ATTEMPTS[ip]  # Deletes entry if successful
     else:
-        LOGIN_ATTEMPTS[ip] = [attempts + 1, time()]  # Erhöht Zähler bei Fehlschlag
+        LOGIN_ATTEMPTS[ip] = [attempts + 1, time()]  # Increases counter if failed
 
 # Reads topic list from telegraf.conf
 def read_topics():
@@ -54,6 +54,19 @@ def read_topics():
         return topics
     return []  # In case no Topics are found
 
+def read_server_addr():
+    with open(TELEGRAF_CONFIG_PATH, "r") as file:
+        config_data = file.read()
+
+    # searches for [[inputs.mqtt_consumer]] and extracts topics
+    mqtt_consumer_match = re.search(r'\[\[inputs\.mqtt_consumer\]\](.*?)\n\s*servers\s*=\s*\[(.*?)\]', config_data, re.DOTALL)
+    
+    if mqtt_consumer_match:
+        servers_string = mqtt_consumer_match.group(2).strip()
+        servers = re.findall(r'"([^"]*)"', servers_string)
+        return servers
+    return []  # In case no Topics are found
+
 # Saves topics to telegraf.conf
 def save_topics(topics):
     with open(TELEGRAF_CONFIG_PATH, 'r') as file:
@@ -67,8 +80,36 @@ def save_topics(topics):
 
     with open(TELEGRAF_CONFIG_PATH, 'w') as file:
         file.write(config_data)
+        return True
+
+    return False
+
+def save_server_addr(server_addr):
+    with open(TELEGRAF_CONFIG_PATH, 'r') as file:
+        config_data = file.read()
+    # RegEx, um die servers-Zeile zu finden
+    mqtt_section_match = re.search(r'\[\[inputs\.mqtt_consumer\]\](.*?)(?=\n\[|\Z)', config_data, re.DOTALL)
     
-        return {"status": "success", "message": "Topics erfolgreich gespeichert!"}
+    if mqtt_section_match:
+        section_content = mqtt_section_match.group(0)
+        # Nur aktive servers-Zeilen bearbeiten (keine auskommentierten)
+        active_servers_match = re.search(r'^\s*servers\s*=\s*\[([^\]]+)\]', section_content, re.MULTILINE)
+        
+        if active_servers_match:
+            # Neues Server-Format erstellen
+            new_servers_string = f'{server_addr}'
+            # Ersetzen der aktiven servers-Zeile
+            updated_section = re.sub(r'^\s*servers\s*=\s*\[([^\]]+)\]', f'   servers = {new_servers_string}', section_content, flags=re.MULTILINE)
+
+            # Abschnitt in der Konfiguration aktualisieren
+            config_data = config_data.replace(section_content, updated_section)
+
+            # Datei speichern
+            with open(TELEGRAF_CONFIG_PATH, 'w') as file:
+                file.write(config_data)
+                return True
+
+    return False
 
 
 # Middleware for login check
@@ -114,8 +155,9 @@ def get_config():
         return jsonify({"error": "Nicht autorisiert."}), 403
     
     topics = read_topics()
+    server_addr = read_server_addr()
     
-    return jsonify({"topics": topics})
+    return jsonify({"topics": topics, "server_addr": server_addr})
 
 @app.route('/api/save-config', methods=['POST'])
 def save_config():
@@ -124,8 +166,17 @@ def save_config():
     
     data = request.get_json()
     topics = data.get('topics', [])
+    server_addr = data.get('server_addr', [])
     
-    return jsonify(save_topics(topics))
+    if topics:
+        if not save_topics(topics):
+            return jsonify({"error": "Fehler beim Speichern der Topics."}), 500
+    
+    if server_addr:
+        if not save_server_addr(server_addr):
+            return jsonify({"error": "Fehler beim Speichern der Topics."}), 500
+    
+    return jsonify({"status": "success", "message": "Topics erfolgreich gespeichert!"})
 
 
 app.run(config["web"]["host"], int(config["web"]["port"]))
