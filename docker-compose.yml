@@ -1,0 +1,10 @@
+services:
+  web:
+    build:
+      dockerfile: Dockerfile
+    container_name: telegraf_web
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app.conf:/app/app.conf
+      - ./telegraf.conf:/app/telegraf.conf

@@ -1,0 +1,181 @@
+/* Allgemeine Body-Stile */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Allgemeiner Container */
+.container {
+    max-width: 400px;
+    width: 100%;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Überschriften */
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Nachricht-Box */
+.message-box {
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    text-align: center;
+    display: none; /* Wird dynamisch eingeblendet */
+}
+
+.message-box.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message-box.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Fehlernachrichten */
+.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+/* Formular-Styling */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* Eingabefelder */
+input[type="text"],
+input[type="password"] {
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Passwort-Eingabe mit Button */
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.input-wrapper input {
+    padding-right: 40px; /* Platz für den Button */
+}
+
+.input-wrapper button.toggle-password {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #555;
+    padding: 0;
+}
+
+.input-wrapper button.toggle-password:hover {
+    color: #000;
+}
+
+/* Buttons */
+button {
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 16px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    filter: brightness(0.9);
+}
+
+/* Hinzufügen-Button */
+#add-topic-btn {
+    background-color: #28a745;
+    margin: 20px auto;
+}
+
+/* Speichern-Button */
+.save-btn {
+    background-color: #007bff;
+    margin-top: 20px;
+}
+
+/* Löschen-Button */
+.topic-item button {
+    background-color: #ff4d4d;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.topic-item button:hover {
+    background-color: #ff3333;
+}
+
+/* Login-Button */
+.login-btn {
+    background-color: #007bff;
+}
+
+/* Topics-Liste */
+.topics-list {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.topic-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.topic-item input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #555;
+    font-size: 14px;
+}
