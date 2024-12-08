@@ -1,22 +1,12 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
-import re
-import configparser
 from time import time
 
+from read import read_topics, read_server_addr, read_qos
+from save import save_topics, save_server_addr, save_qos
+from config import config, LOGIN_ATTEMPTS, MAX_ATTEMPTS, BLOCK_TIME, LOGIN_REQUIRED, LOGIN_PASSWORD
+
 app = Flask(__name__)
-
-config = configparser.ConfigParser()
-config.read('app.conf')
-
 app.secret_key = config["auth"]["secret_key"]
-
-TELEGRAF_CONFIG_PATH = "telegraf.conf"
-LOGIN_REQUIRED = config.getboolean("auth", "login_required", fallback=False)
-LOGIN_PASSWORD = config.get("auth", "password", fallback="")
-
-LOGIN_ATTEMPTS: dict[str, list] = {}
-MAX_ATTEMPTS = int(config.get("auth", "max_attempts", fallback=3))
-BLOCK_TIME = int(config.getint("auth", "block_time", fallback=60))
 
 # Checks if an IP is blocked
 def is_blocked(ip):
@@ -25,7 +15,7 @@ def is_blocked(ip):
         if attempts >= MAX_ATTEMPTS and (time() - last_attempt < BLOCK_TIME):
             return True
         elif time() - last_attempt >= BLOCK_TIME:
-            del LOGIN_ATTEMPTS[ip]  # Reset nach Ablauf der Sperrzeit
+            del LOGIN_ATTEMPTS[ip]  # Reset after block time
     return False
 
 # Registers a login attempt
@@ -39,77 +29,6 @@ def register_attempt(ip, success):
         del LOGIN_ATTEMPTS[ip]  # Deletes entry if successful
     else:
         LOGIN_ATTEMPTS[ip] = [attempts + 1, time()]  # Increases counter if failed
-
-# Reads topic list from telegraf.conf
-def read_topics():
-    with open(TELEGRAF_CONFIG_PATH, "r") as file:
-        config_data = file.read()
-
-    # searches for [[inputs.mqtt_consumer]] and extracts topics
-    mqtt_consumer_match = re.search(r'\[\[inputs\.mqtt_consumer\]\](.*?)\n\s*topics\s*=\s*\[(.*?)\]', config_data, re.DOTALL)
-    
-    if mqtt_consumer_match:
-        topics_string = mqtt_consumer_match.group(2).strip()
-        topics = re.findall(r'"([^"]*)"', topics_string)
-        return topics
-    return []  # In case no Topics are found
-
-def read_server_addr():
-    with open(TELEGRAF_CONFIG_PATH, "r") as file:
-        config_data = file.read()
-
-    # searches for [[inputs.mqtt_consumer]] and extracts topics
-    mqtt_consumer_match = re.search(r'\[\[inputs\.mqtt_consumer\]\](.*?)\n\s*servers\s*=\s*\[(.*?)\]', config_data, re.DOTALL)
-    
-    if mqtt_consumer_match:
-        servers_string = mqtt_consumer_match.group(2).strip()
-        servers = re.findall(r'"([^"]*)"', servers_string)
-        return servers
-    return []  # In case no Topics are found
-
-# Saves topics to telegraf.conf
-def save_topics(topics):
-    with open(TELEGRAF_CONFIG_PATH, 'r') as file:
-        config_data = file.read()
-
-    # RegEx to Find topics in telegraf.conf
-    topics_match = re.search(r'topics\s*=\s*\[(.*?)\]', config_data, re.DOTALL)
-    if topics_match:
-        new_topics_string = "\n     ".join([f'"{topic}"' for topic in topics])
-        config_data = re.sub(r'topics\s*=\s*\[([^\]]+)\]', f'topics = [\n     {new_topics_string},\n   ]', config_data)
-
-    with open(TELEGRAF_CONFIG_PATH, 'w') as file:
-        file.write(config_data)
-        return True
-
-    return False
-
-def save_server_addr(server_addr):
-    with open(TELEGRAF_CONFIG_PATH, 'r') as file:
-        config_data = file.read()
-    # RegEx, um die servers-Zeile zu finden
-    mqtt_section_match = re.search(r'\[\[inputs\.mqtt_consumer\]\](.*?)(?=\n\[|\Z)', config_data, re.DOTALL)
-    
-    if mqtt_section_match:
-        section_content = mqtt_section_match.group(0)
-        # Nur aktive servers-Zeilen bearbeiten (keine auskommentierten)
-        active_servers_match = re.search(r'^\s*servers\s*=\s*\[([^\]]+)\]', section_content, re.MULTILINE)
-        
-        if active_servers_match:
-            # Neues Server-Format erstellen
-            new_servers_string = f'{server_addr}'
-            # Ersetzen der aktiven servers-Zeile
-            updated_section = re.sub(r'^\s*servers\s*=\s*\[([^\]]+)\]', f'   servers = {new_servers_string}', section_content, flags=re.MULTILINE)
-
-            # Abschnitt in der Konfiguration aktualisieren
-            config_data = config_data.replace(section_content, updated_section)
-
-            # Datei speichern
-            with open(TELEGRAF_CONFIG_PATH, 'w') as file:
-                file.write(config_data)
-                return True
-
-    return False
 
 
 # Middleware for login check
@@ -125,11 +44,11 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if not LOGIN_REQUIRED:
-        return jsonify({"error": "Login ist deaktiviert."}), 403
+        return jsonify({"error": "Login is deactivated."}), 403
 
     ip = request.remote_addr
     if is_blocked(ip):
-        return render_template("login.html", error="Zu viele Fehlversuche. Versuchen Sie es später erneut.")
+        return render_template("login.html", error="To many Failed login attempts. Please try again later.")
 
     if request.method == 'POST':
         password = request.form.get("password", "")
@@ -156,27 +75,34 @@ def get_config():
     
     topics = read_topics()
     server_addr = read_server_addr()
+    qos = read_qos()
     
-    return jsonify({"topics": topics, "server_addr": server_addr})
+    return jsonify({"topics": topics, "server_addr": server_addr, "qos": qos})
 
 @app.route('/api/save-config', methods=['POST'])
 def save_config():
     if LOGIN_REQUIRED and not session.get("logged_in"):
-        return jsonify({"error": "Nicht autorisiert."}), 403
+        return jsonify({"error": "Not authorized."}), 403
     
     data = request.get_json()
+    
     topics = data.get('topics', [])
     server_addr = data.get('server_addr', [])
+    qos = data.get('qos', None)
     
     if topics:
         if not save_topics(topics):
-            return jsonify({"error": "Fehler beim Speichern der Topics."}), 500
+            return jsonify({"error": "Failed to save topics."}), 500
     
     if server_addr:
         if not save_server_addr(server_addr):
-            return jsonify({"error": "Fehler beim Speichern der Topics."}), 500
+            return jsonify({"error": "Failed to save Server adress."}), 500
+        
+    if qos:
+        if not save_qos(qos):
+            return jsonify({"error": "Failed to save qos value."}), 500
     
-    return jsonify({"status": "success", "message": "Topics erfolgreich gespeichert!"})
+    return jsonify({"status": "success", "message": "config saved succesfully!"})
 
 
 app.run(config["web"]["host"], int(config["web"]["port"]))
