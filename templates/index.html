@@ -11,19 +11,27 @@
     <div class="container">
         <h1>MQTT Topics</h1>
 
-        <!-- Area for messages -->
+        <!-- Message Box for status messages -->
         <div id="message-box" class="message-box"></div>
+
+        <!-- Button to go to Settings page -->
+        <button id="settings-btn" class="nav-btn">Einstellungen</button>
+
+        <!-- Button to logout -->
+        <button id="logout-btn" class="nav-btn">Abmelden</button>
 
         <form id="topics-form">
             <div class="topics-list" id="topics-list">
-                <!-- Display Topics dynamic -->
+                <!-- Dynamically loaded topics will appear here -->
             </div>
             <button type="button" id="add-topic-btn">+ Neues Topic hinzufügen</button>
             <button type="submit" class="save-btn">Speichern</button>
         </form>
+
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="spinner" style="display: none;"></div>
     </div>
 
-    <!-- Link to Java script file -->
     <script src="static/dashboard.js"></script>
 </body>
 </html>

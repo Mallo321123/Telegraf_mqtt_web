@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegraf MQTT Config - Einstellungen</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <link rel="icon" href="static/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <h1>MQTT Konfiguration Einstellungen</h1>
+
+        <!-- Message Box for status messages -->
+        <div id="message-box" class="message-box"></div>
+
+        <form id="settings-form">
+            <label for="client-id">Client ID:</label>
+            <input type="text" id="client-id" name="client_id" required>
+
+            <label for="connection-timeout">Verbindungstimeout (in Sekunden):</label>
+            <input type="text" id="connection-timeout" name="connection_timeout" required>
+
+            <label for="data-format">Datenformat:</label>
+            <select id="data-format" name="data_format">
+                <option value="json">JSON</option>
+                <option value="influx">InfluxDB Line Protocol</option>
+            </select>
+
+            <label for="insecure-skip-verify">Insecure Skip Verify:</label>
+            <input type="checkbox" id="insecure-skip-verify" name="insecure_skip_verify">
+
+            <label for="password">Passwort:</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="qos">QoS:</label>
+            <select id="qos" name="qos">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+            </select>
+
+            <label for="servers">MQTT Server (Comma separated):</label>
+            <input type="text" id="servers" name="servers" required>
+
+            <label for="tls-ca">TLS CA Datei:</label>
+            <input type="text" id="tls-ca" name="tls_ca">
+
+            <label for="username">Benutzername:</label>
+            <input type="text" id="username" name="username" required>
+
+            <button type="submit" class="save-btn">Speichern</button>
+        </form>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="spinner" style="display: none;"></div>
+
+    <script src="static/settings.js"></script>
+</body>
+</html>

@@ -2,22 +2,19 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from time import time
 import toml
 
-#from read import read_topics, read_server_addr, read_qos, read_connection_timeout
-#from save import save_topics, save_server_addr, save_qos, save_connection_timeout
 from config import config, LOGIN_ATTEMPTS, MAX_ATTEMPTS, BLOCK_TIME, LOGIN_REQUIRED, LOGIN_PASSWORD, TELEGRAF_CONFIG, TELEGRAF_CONFIG_PATH
 
 app = Flask(__name__)
 app.secret_key = config["auth"]["secret_key"]
 
 def update_toml(input_data):
-    for section, section_data in input_data.items():
-        if section in TELEGRAF_CONFIG:
-            for key, value in section_data.items():
-                if isinstance(value, dict):
-                    if key in TELEGRAF_CONFIG[section]:
-                        update_toml(TELEGRAF_CONFIG[section], {key: value})
-                else:
-                    TELEGRAF_CONFIG[section][key] = value
+    if 'inputs' in TELEGRAF_CONFIG and 'mqtt_consumer' in TELEGRAF_CONFIG['inputs']:
+        for consumer in TELEGRAF_CONFIG['inputs']['mqtt_consumer']:
+            # Aktualisieren der Werte basierend auf der JSON-Konfiguration
+            for key, value in input_data.items():
+                if key in consumer:
+                    consumer[key] = value
+
     return TELEGRAF_CONFIG
 
 # Checks if an IP is blocked
@@ -52,6 +49,10 @@ def require_login():
 @app.route('/')
 def index():
     return render_template("index.html")
+
+@app.route('/settings')
+def settings():
+    return render_template("settings.html")   
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
