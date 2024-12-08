@@ -1,29 +1,29 @@
-// Funktion, um Nachrichten anzuzeigen
+// Shows Messages
 function showMessage(message, type = "success") {
     const messageBox = document.getElementById("message-box");
     messageBox.textContent = message;
     messageBox.className = `message-box ${type}`; // Typ (success, error) hinzufügen
 
-    // Nachricht nach 5 Sekunden ausblenden
+    // Removes message after 5 seconds
     setTimeout(() => {
         messageBox.textContent = "";
         messageBox.className = "message-box";
     }, 5000);
 }
 
-// Funktion, um die Topics dynamisch hinzuzufügen
+// Adds Topics dynamically
 function loadTopics() {
-    fetch('/api/config') // API-Request für Topics
+    fetch('/api/config') // API-Request for Topics
         .then(response => response.json())
         .then(data => {
-            const topics = data.topics || []; // Falls keine Topics vorhanden sind, leere Liste
+            const topics = data.topics || []; // When no topics are available, an empty array is returned
             const topicsList = document.getElementById('topics-list');
 
-            // Entfernen aller vorhandenen Topics im DOM, bevor wir die neuen hinzufügen
+            // Remove all existing topics
             topicsList.innerHTML = '';
 
             topics.forEach(topic => {
-                // Neues Topic-Element erstellen
+                // Create new topic item
                 const topicItem = document.createElement('div');
                 topicItem.classList.add('topic-item');
                 topicItem.innerHTML = `
@@ -37,7 +37,7 @@ function loadTopics() {
         .catch(error => showMessage("Fehler beim Laden der Topics!", "error"));
 }
 
-// Hinzufügen eines neuen Topic-Feldes
+// Create new topic field
 document.getElementById('add-topic-btn').addEventListener('click', function() {
     const topicItem = document.createElement('div');
     topicItem.classList.add('topic-item');
@@ -45,18 +45,18 @@ document.getElementById('add-topic-btn').addEventListener('click', function() {
     document.getElementById('topics-list').appendChild(topicItem);
 });
 
-// Entfernen eines Topics
+// Remove topic
 document.addEventListener('click', function(event) {
     if (event.target.classList.contains('remove-topic-btn')) {
         event.target.parentElement.remove();
     }
 });
 
-// Formular absenden
+// Send formular data
 document.getElementById('topics-form').addEventListener('submit', function(event) {
-    event.preventDefault(); // Verhindert das Standard-Submit-Verhalten
+    event.preventDefault(); // prevents the default form submission
 
-    // Alle aktuellen Topics aus den Eingabefeldern sammeln
+    // Collect all topics
     const topics = [];
     document.querySelectorAll('input[name="topics"]').forEach(input => {
         if (input.value.trim()) {
@@ -64,7 +64,7 @@ document.getElementById('topics-form').addEventListener('submit', function(event
         }
     });
 
-    // Die geänderten Topics an die API senden
+    // Send changed topics to api
     fetch('/api/save-config', {
         method: 'POST',
         headers: {
@@ -75,10 +75,10 @@ document.getElementById('topics-form').addEventListener('submit', function(event
     .then(response => response.json())
     .then(data => {
         showMessage(data.message, "success");
-        loadTopics(); // Aktualisieren der angezeigten Topics
+        loadTopics(); // Update displayed topics
     })
     .catch(error => showMessage("Fehler beim Speichern der Topics!", "error"));
 });
 
-// Laden der Topics beim ersten Aufruf der Seite
+// Load topics on page load
 window.onload = loadTopics;

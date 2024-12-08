@@ -4,8 +4,6 @@ WORKDIR /app
 
 COPY requirements.txt /app/requirements.txt
 COPY app.py /app/app.py
-COPY read.py /app/read.py
-COPY save.py /app/save.py
 COPY config.py /app/config.py
 COPY templates /app/templates
 COPY static /app/static

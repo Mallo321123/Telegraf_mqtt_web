@@ -1,12 +1,24 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from time import time
+import toml
 
-from read import read_topics, read_server_addr, read_qos
-from save import save_topics, save_server_addr, save_qos
-from config import config, LOGIN_ATTEMPTS, MAX_ATTEMPTS, BLOCK_TIME, LOGIN_REQUIRED, LOGIN_PASSWORD
+#from read import read_topics, read_server_addr, read_qos, read_connection_timeout
+#from save import save_topics, save_server_addr, save_qos, save_connection_timeout
+from config import config, LOGIN_ATTEMPTS, MAX_ATTEMPTS, BLOCK_TIME, LOGIN_REQUIRED, LOGIN_PASSWORD, TELEGRAF_CONFIG, TELEGRAF_CONFIG_PATH
 
 app = Flask(__name__)
 app.secret_key = config["auth"]["secret_key"]
+
+def update_toml(input_data):
+    for section, section_data in input_data.items():
+        if section in TELEGRAF_CONFIG:
+            for key, value in section_data.items():
+                if isinstance(value, dict):
+                    if key in TELEGRAF_CONFIG[section]:
+                        update_toml(TELEGRAF_CONFIG[section], {key: value})
+                else:
+                    TELEGRAF_CONFIG[section][key] = value
+    return TELEGRAF_CONFIG
 
 # Checks if an IP is blocked
 def is_blocked(ip):
@@ -73,11 +85,9 @@ def get_config():
     if LOGIN_REQUIRED and not session.get("logged_in"):
         return jsonify({"error": "Nicht autorisiert."}), 403
     
-    topics = read_topics()
-    server_addr = read_server_addr()
-    qos = read_qos()
+    conf = TELEGRAF_CONFIG["inputs"]["mqtt_consumer"]
     
-    return jsonify({"topics": topics, "server_addr": server_addr, "qos": qos})
+    return jsonify(conf)
 
 @app.route('/api/save-config', methods=['POST'])
 def save_config():
@@ -85,22 +95,10 @@ def save_config():
         return jsonify({"error": "Not authorized."}), 403
     
     data = request.get_json()
+    new_config = update_toml(data)
     
-    topics = data.get('topics', [])
-    server_addr = data.get('server_addr', [])
-    qos = data.get('qos', None)
-    
-    if topics:
-        if not save_topics(topics):
-            return jsonify({"error": "Failed to save topics."}), 500
-    
-    if server_addr:
-        if not save_server_addr(server_addr):
-            return jsonify({"error": "Failed to save Server adress."}), 500
-        
-    if qos:
-        if not save_qos(qos):
-            return jsonify({"error": "Failed to save qos value."}), 500
+    with open(TELEGRAF_CONFIG_PATH, 'w') as f:
+        toml.dump(new_config, f)
     
     return jsonify({"status": "success", "message": "config saved succesfully!"})
 

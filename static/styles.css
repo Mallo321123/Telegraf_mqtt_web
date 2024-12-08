@@ -1,4 +1,4 @@
-/* Allgemeine Body-Stile */
+/* Common Body-Stile */
 body {
     font-family: 'Roboto', sans-serif;
     background-color: #f4f7f6;
@@ -10,7 +10,7 @@ body {
     height: 100vh;
 }
 
-/* Allgemeiner Container */
+/* Common Container */
 .container {
     max-width: 400px;
     width: 100%;
@@ -22,14 +22,14 @@ body {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Überschriften */
+/* Header */
 h1 {
     text-align: center;
     color: #333;
     margin-bottom: 20px;
 }
 
-/* Nachricht-Box */
+/* Message-Box */
 .message-box {
     margin: 15px 0;
     padding: 10px;
@@ -51,7 +51,7 @@ h1 {
     border: 1px solid #f5c6cb;
 }
 
-/* Fehlernachrichten */
+/* Error message */
 .error {
     color: #721c24;
     background-color: #f8d7da;
@@ -74,7 +74,7 @@ form {
     gap: 5px;
 }
 
-/* Eingabefelder */
+/* Inputfield */
 input[type="text"],
 input[type="password"] {
     padding: 10px;
@@ -85,7 +85,7 @@ input[type="password"] {
     width: 100%;
 }
 
-/* Passwort-Eingabe mit Button */
+/* Password entry with button */
 .input-wrapper {
     display: flex;
     align-items: center;
@@ -93,7 +93,7 @@ input[type="password"] {
 }
 
 .input-wrapper input {
-    padding-right: 40px; /* Platz für den Button */
+    padding-right: 40px; /* Space for Button */
 }
 
 .input-wrapper button.toggle-password {
@@ -126,19 +126,19 @@ button:hover {
     filter: brightness(0.9);
 }
 
-/* Hinzufügen-Button */
+/* Add-Button */
 #add-topic-btn {
     background-color: #28a745;
     margin: 20px auto;
 }
 
-/* Speichern-Button */
+/* Save-Button */
 .save-btn {
     background-color: #007bff;
     margin-top: 20px;
 }
 
-/* Löschen-Button */
+/* Delete-Button */
 .topic-item button {
     background-color: #ff4d4d;
     padding: 5px 10px;
@@ -154,7 +154,7 @@ button:hover {
     background-color: #007bff;
 }
 
-/* Topics-Liste */
+/* Topics-List */
 .topics-list {
     margin: 20px 0;
     display: flex;
